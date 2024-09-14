@@ -1,0 +1,34 @@
+db.Employees.insertOne({"EmployeeID":1,"FirstName":'Bhavya',"LastName":'Sree',"DateOfBirth":'24-08-2006',"Department":'CSC'});
+db.Employees.findOne({Department:'CSC'});
+db.Salaries.updateOne({ "EmployeeID": 1 },{ $set: { "Salary": 75000 } });
+db.Employees.deleteOne({ "EmployeeID": 1 });
+db.Employees.find({"Department": "IT","DateOfBirth": { $lt: ISODate("1994-01-01T00:00:00Z") } });
+db.Employees.find({ $or: [{ "JobTitle": "Developer" },{ "Salary": { $gt: 80000 } }]});
+db.Employees.find().sort({ "LastName": 1 });
+db.Salaries.aggregate([{$group: {_id: null,averageSalary: { $avg: "$Salary" }}}]);
+db.Employees.aggregate([
+    {
+        $lookup: {
+            from: "Salaries",
+            localField: "EmployeeID",
+            foreignField: "EmployeeID",
+            as: "EmployeeSalary"
+        }
+    },
+    {
+        $unwind: "$EmployeeSalary"
+    },
+    {
+        $group: {
+            _id: "$Department",
+            totalSalaries: { $sum: "$EmployeeSalary.Salary" }
+        }
+    }
+]);
+
+
+
+
+
+
+

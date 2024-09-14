@@ -1,0 +1,155 @@
+db.Employees.insertOne({"EmployeeID":1,"FirstName":'Alice',"LastName":'Johnson',"DateOfBirth":'1990-01-15',"Department":'HR'})
+
+db.Orders.insertOne({"OrderDates":'2024-01-15',"CustomerId":1,"Amount":300,"OrderId":1})
+
+Task 3.1
+db.Employees.find()
+Task 3.2
+db.Orders.find()
+Task 3.3
+db.Employees.findOne({'FirstName':'Alice','LastName':'Johnson'})
+Task 3.4
+db.Orders.findOne({'OrderId':1,'Amount':300})
+
+Task 4.1
+db.Employees.updateOne({ EmployeeId: 1 }, { $set: { Department: 'Finance' } }); 
+Task 4.2
+db.Orders.updateOne({ OrderId: 2 }, { $set: { Amount: 500 } }); 
+Task 4.3
+db.Employees.deleteOne({ EmployeeID:1});
+Task 4.4
+db.Orders.deleteOne({amount:{$lt:100}});  
+
+db.Employees.find({ "Department": "HR" });
+
+db.Orders.find({ "Amount": { $gt: 300 } });
+
+db.Employees.find({"Department": "HR","DateOfBirth": { $gt: "1990-01-01" }});
+
+db.Orders.find({"Amount": { $gt: 300 },"OrderDate": { $lt: "2023-01-01" }});
+
+db.Employees.find({"Department": { $in: ["HR", "Finance"] }});
+
+db.Orders.find({$or: [{ "Amount": { $lt: 100 } },{ "OrderDate": { $gt: "2023-01-01" } }]});
+
+db.Employees.find().sort({ "LastName": 1 });
+
+db.Orders.find().sort({ "Amount": -1 });
+
+db.Employees.countDocuments();
+
+db.Orders.countDocuments();
+
+db.Orders.aggregate([{$group: {_id: null,averageAmount: { $avg: "$Amount" }}}]);
+
+db.Employees.aggregate([
+    {
+        $addFields: {
+            age: {
+                $subtract: [
+                    { $year: new Date() }, 
+                    { $year: "$DateOfBirth" } 
+                ]
+            }
+        }
+    },
+    {
+        $group: {
+            _id: null,
+            averageAge: { $avg: "$age" }
+        }
+    }
+]);
+
+db.Employees.aggregate([
+    {
+        $group: {
+            _id: "$Department",
+            employeeCount: { $sum: 1 }
+        }
+    }
+]);
+
+db.Orders.aggregate([
+    {
+        $group: {
+            _id: "$CustomerID",
+            totalAmount: { $sum: "$Amount" }
+        }
+    }
+]);
+
+db.Employees.aggregate([
+    {
+        $group: {
+            _id: "$Department",
+            employeeCount: { $sum: 1 }
+        }
+    },
+    {
+        $match: {
+            employeeCount: { $gt: 5 }
+        }
+    }
+]);
+
+db.Orders.aggregate([
+    {
+        $group: {
+            _id: "$CustomerID",
+            totalAmount: { $sum: "$Amount" }
+        }
+    },
+    {
+        $match: {
+            totalAmount: { $gt: 1000 }
+        }
+    }
+]);
+
+db.Employees.aggregate([
+    {
+        $lookup: {
+            from: "Orders",
+            localField: "EmployeeID",
+            foreignField: "CustomerID",
+            as: "OrderDetails"
+        }
+    },
+    {
+        $unwind: "$OrderDetails"
+    },
+    {
+        $project: {
+            _id: 0,
+            FirstName: 1,
+            LastName: 1,
+            Amount: "$OrderDetails.Amount"
+        }
+    }
+]);
+
+db.Employees.aggregate([
+    {
+        $lookup: {
+            from: "Orders",
+            localField: "EmployeeID",
+            foreignField: "CustomerID",
+            as: "OrderDetails"
+        }
+    },
+    {
+        $unwind: {
+            path: "$OrderDetails",
+            preserveNullAndEmptyArrays: true
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            FirstName: 1,
+            LastName: 1,
+            Amount: { $ifNull: ["$OrderDetails.Amount", 0] } // Default to 0 if no order
+        }
+    }
+]);
